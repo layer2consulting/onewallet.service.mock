@@ -23,7 +23,7 @@ export type CreateMessageCommandInput = {
   readonly admin: string;
   readonly creator?: string;
   readonly body: {
-    [language in Language]?: { title: string; content: string }
+    [language in Language]?: { title: string; content: string };
   };
   readonly targetAccounts: string[];
   readonly targetMemberLevels?: string[];

@@ -1,3 +1,4 @@
+/* eslint-disable import/no-mutable-exports */
 import R from 'ramda';
 import Amqp from '@highoutput/amqp';
 
@@ -27,6 +28,8 @@ export async function start(amqp: Amqp, initialRebates: Document[]) {
           }
         );
       }
+
+      throw new Error(`\`${type}\` is not supported.`);
     }),
     amqp.createWorker('Rebate.Command', async () => {
       return true;
@@ -35,5 +38,5 @@ export async function start(amqp: Amqp, initialRebates: Document[]) {
 }
 
 export async function stop() {
-  await Promise.all(workers.map(worker => worker.stop()));
+  await Promise.all(workers.map((worker) => worker.stop()));
 }

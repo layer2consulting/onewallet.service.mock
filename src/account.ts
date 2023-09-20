@@ -32,7 +32,7 @@ type Request = {
   id: 'AdminNotMemberLevelOwner';
 };
 
-let dataReturned = {
+const dataReturned = {
   data: [
     'id',
     'username',
@@ -62,7 +62,11 @@ export async function start(amqp: Amqp, accounts: any[]) {
   workers = await Promise.all([
     amqp.createWorker('Account.Query', async ({ type, data }) => {
       if (type === 'Account') {
-        return R.find(account => R.equals(data, R.pick(R.keys<string>(data), account)))(accounts) || null;
+        return (
+          R.find((account) =>
+            R.equals(data, R.pick(R.keys<string>(data), account)),
+          )(accounts) || null
+        );
       }
 
       if (type === 'AccountMemberLevels') {
@@ -102,7 +106,7 @@ export async function start(amqp: Amqp, accounts: any[]) {
             frozen: true,
             ...['lastLogin', 'timestamp'].reduce(
               (acc, curr) => Object.assign(acc, { [curr]: Date.now() }),
-              {}
+              {},
             ),
           },
         ];
@@ -116,7 +120,7 @@ export async function start(amqp: Amqp, accounts: any[]) {
             frozen: true,
             ...['lastLogin', 'timestamp'].reduce(
               (acc, curr) => Object.assign(acc, { [curr]: Date.now() }),
-              {}
+              {},
             ),
           },
         ];
@@ -127,7 +131,7 @@ export async function start(amqp: Amqp, accounts: any[]) {
           {
             ...['id', 'admin', 'name', 'description', 'indexes'].reduce(
               (acc, curr) => Object.assign(acc, { [curr]: uuid() }),
-              {}
+              {},
             ),
             handlingFeeType: 'PERCENTAGE',
             handlingFee: 123.2,
@@ -151,166 +155,173 @@ export async function start(amqp: Amqp, accounts: any[]) {
           },
         ];
       }
+
+      throw new Error(`\`${type}\` is not supported.`);
     }),
-    amqp.createWorker('Account.Command', async function handleCommand({
-      type,
-      data,
-    }: {
-      type: string;
-      data: Request;
-    }) {
-      if (type === 'CreateAccount') {
-        if (data.username === 'RoleSuperAdmin') {
-          throw new InvalidRequestError(
-            'Cannot create account with role `super_admin`.',
-            { invalidRole: true }
-          );
+    amqp.createWorker(
+      'Account.Command',
+      async function handleCommand({
+        type,
+        data,
+      }: {
+        type: string;
+        data: Request;
+      }) {
+        if (type === 'CreateAccount') {
+          if (data.username === 'RoleSuperAdmin') {
+            throw new InvalidRequestError(
+              'Cannot create account with role `super_admin`.',
+              { invalidRole: true },
+            );
+          }
+          if (data.username === 'RoleMember') {
+            throw new InvalidRequestError(
+              'Accounts with `member` role cannot create account',
+              { invalidRole: true },
+            );
+          }
+          if (data.username === 'RoleOperatorWithRoleAdmin') {
+            throw new InvalidRequestError(
+              'Operator cannot create account with role `admin`.',
+              { invalidRole: true },
+            );
+          }
+          if (data.username === 'RoleOperatorWithRoleSuperAdmin') {
+            throw new InvalidRequestError(
+              'Operator cannot create account with role `super_admin`.',
+              { invalidRole: true },
+            );
+          }
+          if (data.username === 'RoleOperatorWithRoleOperator') {
+            throw new InvalidRequestError(
+              'Operator cannot create account with role `operator`.',
+              { invalidRole: true },
+            );
+          }
+
+          return generateFakeId('acc');
         }
-        if (data.username === 'RoleMember') {
-          throw new InvalidRequestError(
-            'Accounts with `member` role cannot create account',
-            { invalidRole: true }
-          );
+        if (type === 'UpdateAccount') {
+          if (data.username === 'AccountNotFound') {
+            throw new ResourceNotFoundError({ type: 'user', id: uuid() });
+          }
+          return true;
         }
-        if (data.username === 'RoleOperatorWithRoleAdmin') {
-          throw new InvalidRequestError(
-            'Operator cannot create account with role `admin`.',
-            { invalidRole: true }
-          );
+        if (type === 'AssignPermissionGroup') {
+          if (data.account === 'AccountNotFound') {
+            throw new ResourceNotFoundError({ type: 'account', id: uuid() });
+          }
+          if (data.account === 'PermissionGrouptNotFound') {
+            throw new ResourceNotFoundError({
+              type: 'permission_group',
+              id: uuid(),
+            });
+          }
+          if (data.account === 'AdminNotPermissionGroupOwner') {
+            throw new ResourceNotFoundError({
+              account: uuid(),
+              permissionGroup: uuid(),
+              admin: uuid(),
+              adminMismatch: true,
+            });
+          }
+          if (data.account === 'AdminPermissionGroupExist') {
+            throw new ResourceExistsError({
+              account: uuid(),
+              permissionGroup: uuid(),
+            });
+          }
+          return true;
         }
-        if (data.username === 'RoleOperatorWithRoleSuperAdmin') {
-          throw new InvalidRequestError(
-            'Operator cannot create account with role `super_admin`.',
-            { invalidRole: true }
-          );
+        if (type === 'DeassignPermissionGroup') {
+          if (data.account === 'AccountNotFound') {
+            throw new ResourceNotFoundError({ type: 'account', id: uuid() });
+          }
+          if (data.account === 'PermissionGrouptNotFound') {
+            throw new ResourceNotFoundError({
+              type: 'permission_group',
+              id: uuid(),
+            });
+          }
+          if (data.account === 'AdminNotPermissionGroupOwner') {
+            throw new ResourceNotFoundError({
+              account: uuid(),
+              permissionGroup: uuid(),
+              admin: uuid(),
+            });
+          }
+          return true;
         }
-        if (data.username === 'RoleOperatorWithRoleOperator') {
-          throw new InvalidRequestError(
-            'Operator cannot create account with role `operator`.',
-            { invalidRole: true }
-          );
+        if (type === 'UpdatePermissionGroup') {
+          if (data.admin === 'PermissionGrouptNotFound') {
+            throw new ResourceNotFoundError({ id: uuid() });
+          }
+          if (data.admin === 'PermissionGroupWithPerMissionGroup') {
+            throw new ResourceNotFoundError({ id: uuid() });
+          }
+          return true;
+        }
+        if (type === 'DeletePermissionGroup') {
+          if (data.admin === 'PermissionGrouptNotFound') {
+            throw new ResourceNotFoundError({ id: uuid() });
+          }
+          if (data.admin === 'PermissionGroupWithPerMissionGroup') {
+            throw new ResourceNotFoundError({ id: uuid() });
+          }
+          return true;
+        }
+        if (type === 'AssignAccountMemberLevel') {
+          if (data.account === 'MemberLevelNotFound') {
+            throw new ResourceNotFoundError({
+              type: 'member_level',
+              id: uuid(),
+            });
+          }
+          if (data.account === 'MemberLevelExist') {
+            throw new ResourceExistsError({
+              type: 'account_member_level',
+              id: uuid(),
+              account: uuid(),
+              memberLevel: uuid(),
+            });
+          }
+          return uuid();
+        }
+        if (type === 'DeassignAccountMemberLevel') {
+          if (data.account === 'AccountMemberLevelNotFound') {
+            throw new ResourceNotFoundError({
+              type: 'account_member_level',
+              id: uuid(),
+              account: uuid(),
+              memberLevel: uuid(),
+            });
+          }
+          return true;
+        }
+        if (type === 'UpdateMemberLevel') {
+          if (data.id === 'AdminNotMemberLevelOwner') {
+            throw new ResourceNotFoundError({
+              type: 'member_level',
+              id: uuid(),
+            });
+          }
+          return true;
+        }
+        if (type === 'DeleteMemberLevel') {
+          if (data.id === 'AdminNotMemberLevelOwner') {
+            throw new ResourceNotFoundError({
+              type: 'member_level',
+              id: uuid(),
+            });
+          }
+          return true;
         }
 
-        return generateFakeId('acc');
-      }
-      if (type === 'UpdateAccount') {
-        if (data.username === 'AccountNotFound') {
-          throw new ResourceNotFoundError({ type: 'user', id: uuid() });
-        }
-        return true;
-      }
-      if (type === 'AssignPermissionGroup') {
-        if (data.account === 'AccountNotFound') {
-          throw new ResourceNotFoundError({ type: 'account', id: uuid() });
-        }
-        if (data.account === 'PermissionGrouptNotFound') {
-          throw new ResourceNotFoundError({
-            type: 'permission_group',
-            id: uuid(),
-          });
-        }
-        if (data.account === 'AdminNotPermissionGroupOwner') {
-          throw new ResourceNotFoundError({
-            account: uuid(),
-            permissionGroup: uuid(),
-            admin: uuid(),
-            adminMismatch: true,
-          });
-        }
-        if (data.account === 'AdminPermissionGroupExist') {
-          throw new ResourceExistsError({
-            account: uuid(),
-            permissionGroup: uuid(),
-          });
-        }
-        return true;
-      }
-      if (type === 'DeassignPermissionGroup') {
-        if (data.account === 'AccountNotFound') {
-          throw new ResourceNotFoundError({ type: 'account', id: uuid() });
-        }
-        if (data.account === 'PermissionGrouptNotFound') {
-          throw new ResourceNotFoundError({
-            type: 'permission_group',
-            id: uuid(),
-          });
-        }
-        if (data.account === 'AdminNotPermissionGroupOwner') {
-          throw new ResourceNotFoundError({
-            account: uuid(),
-            permissionGroup: uuid(),
-            admin: uuid(),
-          });
-        }
-        return true;
-      }
-      if (type === 'UpdatePermissionGroup') {
-        if (data.admin === 'PermissionGrouptNotFound') {
-          throw new ResourceNotFoundError({ id: uuid() });
-        }
-        if (data.admin === 'PermissionGroupWithPerMissionGroup') {
-          throw new ResourceNotFoundError({ id: uuid() });
-        }
-        return true;
-      }
-      if (type === 'DeletePermissionGroup') {
-        if (data.admin === 'PermissionGrouptNotFound') {
-          throw new ResourceNotFoundError({ id: uuid() });
-        }
-        if (data.admin === 'PermissionGroupWithPerMissionGroup') {
-          throw new ResourceNotFoundError({ id: uuid() });
-        }
-        return true;
-      }
-      if (type === 'AssignAccountMemberLevel') {
-        if (data.account === 'MemberLevelNotFound') {
-          throw new ResourceNotFoundError({
-            type: 'member_level',
-            id: uuid(),
-          });
-        }
-        if (data.account === 'MemberLevelExist') {
-          throw new ResourceExistsError({
-            type: 'account_member_level',
-            id: uuid(),
-            account: uuid(),
-            memberLevel: uuid(),
-          });
-        }
-        return uuid();
-      }
-      if (type === 'DeassignAccountMemberLevel') {
-        if (data.account === 'AccountMemberLevelNotFound') {
-          throw new ResourceNotFoundError({
-            type: 'account_member_level',
-            id: uuid(),
-            account: uuid(),
-            memberLevel: uuid(),
-          });
-        }
-        return true;
-      }
-      if (type === 'UpdateMemberLevel') {
-        if (data.id === 'AdminNotMemberLevelOwner') {
-          throw new ResourceNotFoundError({
-            type: 'member_level',
-            id: uuid(),
-          });
-        }
-        return true;
-      }
-      if (type === 'DeleteMemberLevel') {
-        if (data.id === 'AdminNotMemberLevelOwner') {
-          throw new ResourceNotFoundError({
-            type: 'member_level',
-            id: uuid(),
-          });
-        }
-        return true;
-      }
-    }),
+        throw new Error(`\`${type}\` is not supported.`);
+      },
+    ),
   ]);
 }
 export async function stop() {
-  await Promise.all(workers.map(worker => worker.stop()));
+  await Promise.all(workers.map((worker) => worker.stop()));
 }

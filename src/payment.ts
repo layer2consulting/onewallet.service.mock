@@ -14,5 +14,5 @@ export async function start(amqp: Amqp) {
 }
 
 export async function stop() {
-  await Promise.all(workers.map(worker => worker.stop()));
+  await Promise.all(workers.map((worker) => worker.stop()));
 }

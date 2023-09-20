@@ -1,16 +1,15 @@
 {
   "compilerOptions": {
+    "types": ["node"],
     "target": "es2017",
     "module": "commonjs",
     "declaration": true,
-    "declarationMap": true,
     "sourceMap": true,
-    "outDir": "./build",
     "strict": true,
     "strictNullChecks": true,
     "strictFunctionTypes": true,
     "strictPropertyInitialization": true,
-    "noImplicitAny": true,
+    "noImplicitAny": false,
     "removeComments": true,
     "noImplicitThis": true,
     "alwaysStrict": true,
@@ -18,8 +17,14 @@
     "noUnusedParameters": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "lib": ["es7", "esnext.asynciterable", "dom"]
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "importHelpers": true,
+    "allowJs": true,
+    "lib": ["es2020","dom", "esnext.asynciterable"],
+    "outDir": "./build",
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules/", "**/node_modules/**/*", ".history"]
+  "exclude": ["build", "node_modules/", "**/node_modules/**/*", ".history"]
 }

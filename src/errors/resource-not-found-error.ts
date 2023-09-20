@@ -1,4 +1,5 @@
 import AppError from '@highoutput/error';
+
 interface Meta {
   [key: string]: any;
 }

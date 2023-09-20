@@ -15,23 +15,27 @@ type Game = {
 let workers: any[];
 export async function start(amqp: Amqp, games: Game[]) {
   workers = await Promise.all([
-    amqp.createWorker('Vendor.Query', async ({ type, data }: { type: string; data: Game }) => {
-      if (type === 'Game') {
-        return (
-          R.find<Game>(
-            game => game.vendor === (/^vnd_.+$/.test(data.vendor)
-              ? data.vendor
-              : generateVendorId(data.vendor))
-                  && game.code === data.code,
-          )(games) || null
-        );
-      }
+    amqp.createWorker(
+      'Vendor.Query',
+      async ({ type, data }: { type: string; data: Game }) => {
+        if (type === 'Game') {
+          return (
+            R.find<Game>(
+              (game) =>
+                game.vendor ===
+                  (/^vnd_.+$/.test(data.vendor)
+                    ? data.vendor
+                    : generateVendorId(data.vendor)) && game.code === data.code,
+            )(games) || null
+          );
+        }
 
-      return null;
-    }),
+        return null;
+      },
+    ),
   ]);
 }
 
 export async function stop() {
-  await Promise.all(workers.map(worker => worker.stop()));
+  await Promise.all(workers.map((worker) => worker.stop()));
 }

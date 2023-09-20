@@ -5,10 +5,4 @@ import * as Vendor from './vendor';
 import * as Rebate from './rebate';
 
 export * from './util';
-export {
-  Wallet,
-  Account,
-  Rebate,
-  Message,
-  Vendor,
-};
+export { Wallet, Account, Rebate, Message, Vendor };

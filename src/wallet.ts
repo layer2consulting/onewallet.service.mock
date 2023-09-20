@@ -1,3 +1,4 @@
+/* eslint-disable import/no-mutable-exports */
 import R from 'ramda';
 import Amqp from '@highoutput/amqp';
 
@@ -11,7 +12,9 @@ let balances: Document[] = [];
 const debits: Record<string, number> = {};
 
 function findDocument(account: string) {
-  const document = R.find((item: Document) => item.account === account)(balances);
+  const document = R.find((item: Document) => item.account === account)(
+    balances,
+  );
 
   if (!document) {
     throw new Error(`Account with id \`${account}\` does not exist.`);
@@ -30,6 +33,7 @@ export async function start(amqp: Amqp, initial: Document[]) {
       if (type === 'AvailableBalance' || type === 'TotalBalance') {
         return findDocument(data.account).balance;
       }
+      throw new Error(`\`${type}\` is not supported.`);
     }),
     amqp.createWorker('Wallet.Command', async ({ type, data }) => {
       const document = findDocument(data.account);
@@ -61,5 +65,5 @@ export async function start(amqp: Amqp, initial: Document[]) {
 }
 
 export async function stop() {
-  await Promise.all(workers.map(worker => worker.stop()));
+  await Promise.all(workers.map((worker) => worker.stop()));
 }

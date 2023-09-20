@@ -23,7 +23,7 @@ export async function start(
   {
     initialMessages,
     initialAccountMessages,
-  }: { initialMessages: Message[]; initialAccountMessages: AccountMessage[] }
+  }: { initialMessages: Message[]; initialAccountMessages: AccountMessage[] },
 ): Promise<void> {
   messages = R.clone(initialMessages);
   accountMessages = R.clone(initialAccountMessages);
@@ -41,7 +41,7 @@ export async function start(
       }
 
       if (type === 'MarkAsRead') {
-        accountMessages.map(accountMessage => {
+        accountMessages.map((accountMessage) => {
           const { admin, account, id } = data as MarkAsReadCommandInput;
           if (
             accountMessage.account !== account &&
@@ -66,10 +66,11 @@ export async function start(
 
       if (type === 'Messages') {
         const filteredMessages = messages.filter(
-          message => message.admin === (data as MessagesQueryInput).filter.admin
+          (message) =>
+            message.admin === (data as MessagesQueryInput).filter.admin,
         );
 
-        const edges = filteredMessages.map(message => {
+        const edges = filteredMessages.map((message) => {
           const cursor = `${message.dateTimeCreated
             .getTime()
             .toString(36)
@@ -88,7 +89,7 @@ export async function start(
             ? R.prop('cursor')(R.last(edges) as { cursor: string })
             : null;
 
-        let hasNextPage = false;
+        const hasNextPage = false;
 
         return {
           totalCount: filteredMessages.length,
@@ -105,10 +106,10 @@ export async function start(
           ({ account, admin }) => {
             const { filter } = data as AccountMessagesQueryInput;
             return account === filter.account && admin === filter.admin;
-          }
+          },
         );
 
-        const edges = filteredAccountMessages.map(accountMessage => {
+        const edges = filteredAccountMessages.map((accountMessage) => {
           const cursor = `${accountMessage.dateTimeCreated
             .getTime()
             .toString(36)
@@ -127,7 +128,7 @@ export async function start(
             ? R.prop('cursor')(R.last(edges) as { cursor: string })
             : null;
 
-        let hasNextPage = false;
+        const hasNextPage = false;
 
         return {
           totalCount: filteredAccountMessages.length,
@@ -138,10 +139,12 @@ export async function start(
           },
         };
       }
+
+      throw new Error(`\`${type}\` is not supported.`);
     }),
   ]);
 }
 
 export async function stop(): Promise<void> {
-  await Promise.all(workers.map(worker => worker.stop()));
+  await Promise.all(workers.map((worker) => worker.stop()));
 }
