@@ -1,5 +1,5 @@
 {
-  "name": "@new-future-holdings/onewallet.service.mock",
+  "name": "@layer2consulting/onewallet.service.mock",
   "version": "0.1.0",
   "description": "",
   "main": "build/index.js",
@@ -12,12 +12,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/new-future-holdings/onewallet.service.mock.git"
+    "url": "git+https://github.com/layer2consulting/onewallet.service.mock.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/new-future-holdings/onewallet.service.mock/issues"
+    "url": "https://github.com/layer2consulting/onewallet.service.mock/issues"
   },
   "dependencies": {
     "@highoutput/amqp": "0.11.5",
