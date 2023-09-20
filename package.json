@@ -1,6 +1,6 @@
 {
   "name": "@new-future-holdings/onewallet.service.mock",
-  "version": "0.16.8",
+  "version": "0.1.0",
   "description": "",
   "main": "build/index.js",
   "scripts": {
@@ -44,6 +44,6 @@
     }
   },
   "publishConfig": {
-    "@YOUR-USERNAME:registry": "https://npm.pkg.github.com"
+    "registry": "https://npm.pkg.github.com"
   }
 }
